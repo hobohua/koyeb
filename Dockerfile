@@ -10,7 +10,7 @@ RUN apk add --no-cache ca-certificates wget unzip bash busybox-extras && \
     mkdir -p /etc/xray /var/www
 
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 8080
 CMD ["/entrypoint.sh"]
