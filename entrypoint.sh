@@ -9,16 +9,10 @@ echo "  端口: ${PORT}"
 echo "  UUID: ${UUID}"
 echo "============================================"
 
-# 创建健康检查页面
-cat > /var/www/index.html << 'HTMLEOF'
-<!DOCTYPE html>
-<html><head><title>Service Status</title></head>
-<body><h1>OK</h1><p>Service is running.</p></body>
-</html>
-HTMLEOF
+mkdir -p /etc/xray /var/www
 
 # 生成 xray 配置
-# 使用 fallback 机制：VLESS WebSocket 走 xray，普通 HTTP 请求走 busybox httpd（健康检查）
+# fallback: 非 WebSocket 请求（如健康检查）转发到 8081 端口的 HTTP 服务
 cat > /etc/xray/config.json << XEOF
 {
   "log": {
@@ -26,6 +20,7 @@ cat > /etc/xray/config.json << XEOF
   },
   "inbounds": [
     {
+      "listen": "0.0.0.0",
       "port": ${PORT},
       "protocol": "vless",
       "settings": {
@@ -34,7 +29,7 @@ cat > /etc/xray/config.json << XEOF
         ],
         "decryption": "none",
         "fallbacks": [
-          {"dest": 8081}
+          {"dest": 8081, "xver": 0}
         ]
       },
       "streamSettings": {
@@ -54,11 +49,16 @@ cat > /etc/xray/config.json << XEOF
 }
 XEOF
 
-# 启动 busybox httpd 作为健康检查服务（端口 8081，作为 xray 的 fallback）
-httpd -f -p 8081 -h /var/www &
-HTTPD_PID=$!
-echo "✅ 健康检查服务已启动 (PID: ${HTTPD_PID}, 端口: 8081)"
+echo "✅ xray 配置已生成"
+
+# 启动 Python HTTP 健康检查服务（端口 8081，作为 fallback 目标）
+python3 -m http.server 8081 --directory /var/www --bind 127.0.0.1 &
+HEALTH_PID=$!
+echo "✅ 健康检查服务已启动 (PID: ${HEALTH_PID}, 端口: 8081)"
+
+# 等一下确保健康检查服务就绪
+sleep 1
 
 # 启动 xray
-echo "✅ 启动 xray VLESS 服务..."
+echo "✅ 启动 xray VLESS 服务 (端口: ${PORT})..."
 exec /usr/local/xray/xray run -config /etc/xray/config.json

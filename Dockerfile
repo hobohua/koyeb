@@ -1,7 +1,7 @@
 FROM alpine:latest
 
-# 安装 xray
-RUN apk add --no-cache ca-certificates wget unzip bash busybox-extras && \
+# 安装 xray + python3（用于健康检查 HTTP 服务）
+RUN apk add --no-cache ca-certificates wget unzip bash python3 && \
     wget -qO /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip" && \
     mkdir -p /usr/local/xray && \
     unzip /tmp/xray.zip -d /usr/local/xray && \
