@@ -1,13 +1,13 @@
 FROM alpine:latest
 
-# 安装 xray + python3（用于健康检查 HTTP 服务）
-RUN apk add --no-cache ca-certificates wget unzip bash python3 && \
+# 安装 nginx + xray
+RUN apk add --no-cache ca-certificates nginx wget unzip bash && \
     wget -qO /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip" && \
     mkdir -p /usr/local/xray && \
     unzip /tmp/xray.zip -d /usr/local/xray && \
     chmod +x /usr/local/xray/xray && \
     rm /tmp/xray.zip && \
-    mkdir -p /etc/xray /var/www
+    mkdir -p /etc/xray /run/nginx /var/www
 
 COPY entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
