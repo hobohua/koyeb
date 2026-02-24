@@ -10,6 +10,7 @@ echo "  UUID: ${UUID}"
 echo "============================================"
 
 mkdir -p /etc/xray /var/www
+echo "OK" > /var/www/index.html
 
 # 生成 xray 配置
 # fallback: 非 WebSocket 请求（如健康检查）转发到 8081 端口的 HTTP 服务
