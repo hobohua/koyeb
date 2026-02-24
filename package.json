@@ -1,0 +1,16 @@
+{
+    "name": "pure-vless",
+    "version": "1.0.0",
+    "description": "Pure VLESS proxy server (no cloudflared)",
+    "main": "src/server.js",
+    "scripts": {
+        "start": "node src/server.js"
+    },
+    "private": false,
+    "dependencies": {
+        "ws": "^8.14.2"
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    }
+}
