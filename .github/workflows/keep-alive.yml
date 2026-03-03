@@ -2,30 +2,32 @@ name: 保活 Render 服务
 
 on:
   schedule:
-    # 每 14 分钟 ping 一次（Render 15 分钟无流量休眠）
-    - cron: '*/14 * * * *'
-  workflow_dispatch:  # 允许手动触发
+    # 用不规则的时间点，模拟真人访问（避免机器特征）
+    - cron: '3,19,37,52 * * * *'
+  workflow_dispatch:
 
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Render 服务
+      - name: 随机延迟后 Ping
         run: |
-          echo "⏰ $(date '+%Y-%m-%d %H:%M:%S') 开始保活..."
+          # 随机等待 0-120 秒，让每次请求时间不完全固定
+          DELAY=$((RANDOM % 120))
+          echo "⏰ $(date '+%Y-%m-%d %H:%M:%S') 随机延迟 ${DELAY}s..."
+          sleep $DELAY
           
-          # Render 服务地址
           RENDER_URL="https://data-pipeline-654.onrender.com/"
           
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$RENDER_URL" || echo "000")
           
           if [ "$STATUS" = "200" ]; then
-            echo "✅ Render 服务正常 (HTTP $STATUS)"
+            echo "✅ Render 正常 (HTTP $STATUS)"
           elif [ "$STATUS" = "000" ]; then
-            echo "⚠️ Render 服务无响应（可能在唤醒中），等待重试..."
+            echo "⚠️ 无响应，等待唤醒后重试..."
             sleep 60
             STATUS2=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$RENDER_URL" || echo "000")
-            echo "🔄 重试结果: HTTP $STATUS2"
+            echo "🔄 重试: HTTP $STATUS2"
           else
-            echo "⚠️ Render 服务响应: HTTP $STATUS"
+            echo "⚠️ HTTP $STATUS"
           fi
